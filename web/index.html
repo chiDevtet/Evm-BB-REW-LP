@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Forge Utility — ETH, burns & liquidity</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/" aria-label="Forge Utility home"
+        ><span class="mark">F</span> FORGE <span class="muted">/ UTILITY</span></a
+      ><span class="network"><i></i> Robinhood Chain</span>
+    </header>
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">FEES THAT GO FURTHER</p>
+          <h1>One token.<br /><span>Three ways to build.</span></h1>
+          <p class="intro">
+            Buybacks remove tokens from circulation. ETH rewards reach holders. V2 liquidity gives
+            the community a share it can own.
+          </p>
+          <div class="hero-links">
+            <a href="#activity" class="button">Explore activity <span>↗</span></a
+            ><a id="contract-link" class="text-link" hidden target="_blank" rel="noopener"
+              >View contract ↗</a
+            >
+          </div>
+        </div>
+        <div class="flow">
+          <div class="flow-top">
+            <span>UTILITY ALLOCATION</span><span id="status" class="pill">NOT DEPLOYED</span>
+          </div>
+          <div class="orbit">
+            <div class="orbit-inner"><span>ETH</span><small>IN → VALUE OUT</small></div>
+          </div>
+          <div class="legend">
+            <span><i class="green"></i> Buyback</span><span><i class="blue"></i> Rewards</span
+            ><span><i class="purple"></i> Liquidity</span>
+          </div>
+        </div>
+      </section>
+      <div class="notice" id="notice" role="status">
+        Deployment pending. Statistics will appear once a utility contract is connected.
+      </div>
+      <section class="stats" aria-label="Live statistics">
+        <article>
+          <label>UTILITY ETH PROCESSED</label><strong id="processed">—</strong
+          ><small>Across all processing rounds</small>
+        </article>
+        <article>
+          <label>TOKENS SENT TO BURN ADDRESS</label><strong id="burned">—</strong
+          ><small>Removed from circulation</small>
+        </article>
+        <article>
+          <label>ETH RESERVED FOR HOLDERS</label><strong id="rewards">—</strong
+          ><small>Includes pending and deferred payments</small>
+        </article>
+        <article>
+          <label>V2 LP TOKENS MINTED</label><strong id="lp">—</strong
+          ><small>Holder + treasury allocations</small>
+        </article>
+      </section>
+      <section class="section-head">
+        <div>
+          <p class="eyebrow">THE ALLOCATION</p>
+          <h2>Every portion has a purpose.</h2>
+        </div>
+        <span id="updated" class="muted">Awaiting deployment</span>
+      </section>
+      <section class="utilities">
+        <article>
+          <span class="icon green">↘</span>
+          <div class="card-top">
+            <h3>Buyback & burn</h3>
+            <b id="burn-share">—</b>
+          </div>
+          <p>
+            ETH buys the launched token through its Forge V4 pool. Purchased tokens go to the dead
+            address.
+          </p>
+          <small>Dead-address transfers do not reduce total supply.</small>
+        </article>
+        <article>
+          <span class="icon blue">◇</span>
+          <div class="card-top">
+            <h3>ETH rewards</h3>
+            <b id="reward-share">—</b>
+          </div>
+          <p>
+            Native ETH is allocated proportionally to eligible token holders at each round’s
+            snapshot.
+          </p>
+          <small>No wrapping or reward-token swap needed.</small>
+        </article>
+        <article>
+          <span class="icon purple">⇄</span>
+          <div class="card-top">
+            <h3>Holder-owned LP</h3>
+            <b id="liquidity-share">—</b>
+          </div>
+          <p>
+            A separate token / WETH V2 pool issues LP tokens. Holders own their distributed LP and
+            can withdraw it.
+          </p>
+          <small id="treasury-share">Treasury share: awaiting configuration.</small>
+        </article>
+      </section>
+      <section id="activity">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">ON-CHAIN ACCOUNTABILITY</p>
+            <h2>Distribution rounds</h2>
+          </div>
+          <span class="pill">ETH + V2 LP</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ROUND</th>
+                <th>SNAPSHOT BLOCK</th>
+                <th>ETH ALLOCATED</th>
+                <th>ETH PAID / DEFERRED</th>
+                <th>LP ALLOCATED</th>
+                <th>MANIFEST</th>
+              </tr>
+            </thead>
+            <tbody id="epochs">
+              <tr>
+                <td colspan="6" class="empty">No distribution rounds yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="details">
+        <article>
+          <h3>Your LP. Your choice.</h3>
+          <p>
+            Distributed V2 LP tokens can be transferred or redeemed for a proportional share of the
+            pool’s assets. Their value and asset mix change with trading.
+          </p>
+        </article>
+        <article>
+          <h3>Two pools, distinct roles.</h3>
+          <p>
+            Forge’s original V4 launch liquidity stays locked. The separate V2 pool earns V2 trading
+            fees; trades there do not fund Forge’s V4 utilities.
+          </p>
+        </article>
+        <article>
+          <h3>Transparent eligibility.</h3>
+          <p>
+            Each manifest records its snapshot, excluded addresses and holder allocations. A
+            designated publisher approves the snapshot allocation before payouts.
+          </p>
+        </article>
+      </section>
+    </main>
+    <footer>
+      <span>FORGE / UTILITY</span><span>Native ETH · Buyback · Rewards · V2 LP</span
+      ><a href="https://github.com/chiDevtet/Evm-BB-REW-LP" target="_blank" rel="noopener"
+        >Source ↗</a
+      >
+    </footer>
+    <script src="/app.js"></script>
+  </body>
+</html>
