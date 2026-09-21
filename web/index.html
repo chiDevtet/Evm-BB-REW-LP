@@ -3,13 +3,19 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Forge Utility — ETH, burns & liquidity</title>
+    <title>Duet — ETH, burns & liquidity</title>
+    <meta
+      name="description"
+      content="Duet on Robinhood Chain: native ETH rewards, buyback and burn, and holder-owned V2 liquidity."
+    />
+    <link rel="icon" type="image/jpeg" href="/assets/duet-logo.jpeg" />
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
     <header>
-      <a class="brand" href="/" aria-label="Forge Utility home"
-        ><span class="mark">F</span> FORGE <span class="muted">/ UTILITY</span></a
+      <a class="brand" href="/" aria-label="Duet home"
+        ><img class="brand-logo" src="/assets/duet-logo.jpeg" alt="" width="60" height="44" /> DUET
+        <span class="muted">/ UTILITY</span></a
       ><span class="network"><i></i> Robinhood Chain</span>
     </header>
     <main>
@@ -33,7 +39,15 @@
             <span>UTILITY ALLOCATION</span><span id="status" class="pill">NOT DEPLOYED</span>
           </div>
           <div class="orbit">
-            <div class="orbit-inner"><span>ETH</span><small>IN → VALUE OUT</small></div>
+            <div class="orbit-inner">
+              <img
+                class="hero-logo"
+                src="/assets/duet-logo.jpeg"
+                alt="Duet logo"
+                width="1498"
+                height="1050"
+              /><span>DUET</span>
+            </div>
           </div>
           <div class="legend">
             <span><i class="green"></i> Buyback</span><span><i class="blue"></i> Rewards</span
@@ -77,7 +91,7 @@
             <b id="burn-share">—</b>
           </div>
           <p>
-            ETH buys the launched token through its Forge V4 pool. Purchased tokens go to the dead
+            ETH buys the launched token through its V4 launch pool. Purchased tokens go to the dead
             address.
           </p>
           <small>Dead-address transfers do not reduce total supply.</small>
@@ -146,8 +160,8 @@
         <article>
           <h3>Two pools, distinct roles.</h3>
           <p>
-            Forge’s original V4 launch liquidity stays locked. The separate V2 pool earns V2 trading
-            fees; trades there do not fund Forge’s V4 utilities.
+            Duet’s original V4 launch liquidity stays locked. The separate V2 pool earns V2 trading
+            fees; trades there do not fund Duet’s V4 utilities.
           </p>
         </article>
         <article>
@@ -160,7 +174,7 @@
       </section>
     </main>
     <footer>
-      <span>FORGE / UTILITY</span><span>Native ETH · Buyback · Rewards · V2 LP</span
+      <span>DUET / UTILITY</span><span>Native ETH · Buyback · Rewards · V2 LP</span
       ><a href="https://github.com/chiDevtet/Evm-BB-REW-LP" target="_blank" rel="noopener"
         >Source ↗</a
       >
