@@ -119,6 +119,7 @@ try {
     recipient: deployer.address,
     amount: String(legacyAmount),
   };
+  stage('checking original-engine retirement sequence');
   await finishLegacyRecovery(
     e.connect(owner),
     legacyJournal,
@@ -281,7 +282,11 @@ try {
 } catch (error) {
   // Avoid printing an authenticated RPC URL or local environment in error output.
   report.error = (error.shortMessage || error.message).split(request.url).join('[RPC_URL]');
+  report.rpcError = error.info?.error;
+  report.failedCall = error.transaction?.data?.slice(0, 10);
   console.error('Robinhood fork gate FAILED:', report.error);
+  if (report.rpcError)
+    console.error(JSON.stringify(report.rpcError).split(request.url).join('[RPC_URL]'));
   process.exitCode = 1;
 } finally {
   await fork?.close();
