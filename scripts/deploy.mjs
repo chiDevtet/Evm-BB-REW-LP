@@ -1,12 +1,15 @@
 import 'dotenv/config';
 import fs from 'node:fs';
 import { JsonRpcProvider, Wallet, ContractFactory, Contract, getAddress } from 'ethers';
+import { checkArbSys } from './chain-check.mjs';
 const req = (k) => {
   if (!process.env[k]) throw Error(`${k} required`);
   return process.env[k];
 };
 const p = new JsonRpcProvider(req('RPC_URL'));
 if ((await p.getNetwork()).chainId !== 4663n) throw Error('Expected Robinhood chain 4663');
+const clock = await checkArbSys(p);
+console.log('Verified ArbSys L2 block:', String(clock.number), 'previous hash:', clock.hash);
 const addresses = [
   'OWNER_ADDRESS',
   'KEEPER_ADDRESS',

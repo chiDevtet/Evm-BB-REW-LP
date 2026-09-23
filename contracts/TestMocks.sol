@@ -1,6 +1,24 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 import './UtilityEngine.sol';
+// TEST ONLY: Anvil has no ArbOS. Offset separates L2 height from the EVM opcode
+// in regression tests; zero offset adapts real fork headers to the ArbSys ABI.
+contract TestArbSys {
+    uint256 public offset;
+    bool public zeroHash;
+    function configure(uint256 value, bool zero) external {
+        offset = value;
+        zeroHash = zero;
+    }
+    function arbBlockNumber() external view returns (uint256) {
+        return block.number + offset;
+    }
+    function arbBlockHash(uint256 number) external view returns (bytes32) {
+        uint256 current = block.number + offset;
+        require(number < current && current - number <= 256, 'invalid arb block');
+        return zeroHash ? bytes32(0) : blockhash(number - offset);
+    }
+}
 contract MockToken {
     string public symbol = 'TEST';
     uint8 public decimals = 18;
@@ -118,5 +136,41 @@ contract RejectETH {
     }
     function withdraw(UtilityEngine e, address payable to) external {
         e.withdrawDeferred(to);
+    }
+}
+contract RecoveryReceiver {
+    UtilityEngine public engine;
+    bool public reentered;
+    function configure(UtilityEngine value) external {
+        engine = value;
+    }
+    function accept() external {
+        engine.acceptOwnership();
+    }
+    function recover(uint256 amount) external {
+        engine.emergencyWithdrawETH(payable(address(this)), amount);
+    }
+    receive() external payable {
+        (reentered, ) = address(engine).call(
+            abi.encodeCall(engine.emergencyWithdrawETH, (payable(address(this)), 1))
+        );
+    }
+}
+contract NoReturnToken {
+    mapping(address => uint256) public balanceOf;
+    function mint(address to, uint256 n) external {
+        balanceOf[to] += n;
+    }
+    function transfer(address to, uint256 n) external {
+        balanceOf[msg.sender] -= n;
+        balanceOf[to] += n;
+    }
+}
+contract FalseReturnToken {
+    function balanceOf(address) external pure returns (uint256) {
+        return 100;
+    }
+    function transfer(address, uint256) external pure returns (bool) {
+        return false;
     }
 }

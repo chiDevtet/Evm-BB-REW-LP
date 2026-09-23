@@ -1,5 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
+interface IArbSys {
+    function arbBlockNumber() external view returns (uint256);
+    function arbBlockHash(uint256) external view returns (bytes32);
+}
 interface IERC20 {
     function balanceOf(address) external view returns (uint256);
     function transfer(address, uint256) external returns (bool);
@@ -35,6 +39,9 @@ interface IFactory {
 }
 /// @notice Single-launch native-ETH utility receiver. Snapshot publisher is trusted for holder weights.
 contract UtilityEngine {
+    // Robinhood's NUMBER uses a parent-chain height; BLOCKHASH is not the canonical L2 hash.
+    // Never fall back to those opcodes if ArbSys is unavailable.
+    IArbSys public constant ARB_SYS = IArbSys(address(0x64));
     struct PoolKey {
         address currency0;
         address currency1;
@@ -100,6 +107,7 @@ contract UtilityEngine {
         bool ethDeferred
     );
     event AllocationsSet(uint16 burn, uint16 rewards, uint16 liquidity, uint16 treasuryLP);
+    event EmergencyWithdrawal(address indexed asset, address indexed to, uint256 amount);
     modifier onlyOwner() {
         require(msg.sender == owner, 'owner');
         _;
@@ -184,6 +192,33 @@ contract UtilityEngine {
     function availableETH() public view returns (uint256) {
         return address(this).balance - reservedETH;
     }
+    /// @notice Owner recovery while paused; committed and deferred holder ETH is protected.
+    /// @dev Works before binding and without calling any hook, router or precompile.
+    function emergencyWithdrawETH(address payable to, uint256 amount) external onlyOwner guard {
+        require(paused, 'pause first');
+        require(to != address(0) && to != address(this), 'recipient');
+        require(amount > 0 && amount <= availableETH(), 'available');
+        (bool ok, ) = to.call{value: amount}('');
+        require(ok, 'send');
+        emit EmergencyWithdrawal(address(0), to, amount);
+    }
+    /// @notice Recover token dust or accidental deposits without consuming reserved holder LP.
+    function emergencyWithdrawToken(
+        address asset,
+        address to,
+        uint256 amount
+    ) external onlyOwner guard {
+        require(paused, 'pause first');
+        require(asset.code.length > 0, 'asset');
+        require(to != address(0) && to != address(this), 'recipient');
+        uint256 available = IERC20(asset).balanceOf(address(this));
+        if (asset == pair) available -= reservedLP;
+        require(amount > 0 && amount <= available, 'available');
+        // Accept both standard ERC20 and legacy tokens with no return value.
+        (bool ok, bytes memory result) = asset.call(abi.encodeCall(IERC20.transfer, (to, amount)));
+        require(ok && (result.length == 0 || abi.decode(result, (bool))), 'transfer');
+        emit EmergencyWithdrawal(asset, to, amount);
+    }
     function collect() public guard {
         require(token != address(0), 'unbound');
         uint256 n = pendingFees();
@@ -202,7 +237,11 @@ contract UtilityEngine {
         require(msg.sender == keeper && !paused && token != address(0), 'inactive');
         require(block.timestamp >= lastProcessedAt + 600, 'cadence');
         require(deadline >= block.timestamp && deadline <= block.timestamp + 300, 'deadline');
-        require(snapshot < block.number && blockhash(snapshot) != bytes32(0), 'snapshot');
+        uint256 currentBlock = ARB_SYS.arbBlockNumber();
+        // ArbSys reverts outside its 256-block history window.
+        require(snapshot < currentBlock && currentBlock - snapshot <= 256, 'snapshot');
+        bytes32 snapshotHash = ARB_SYS.arbBlockHash(snapshot);
+        require(snapshotHash != bytes32(0), 'snapshot');
         require(amount > 0 && amount <= availableETH(), 'budget');
         uint256 burn = (amount * burnBps) / 10000;
         uint256 liquidity = (amount * liquidityBps) / 10000;
@@ -240,16 +279,7 @@ contract UtilityEngine {
         reservedETH += reward;
         reservedLP += holderLP;
         uint256 e = ++epochCount;
-        epochs[e] = Epoch(
-            block.number,
-            snapshot,
-            blockhash(snapshot),
-            reward,
-            holderLP,
-            bytes32(0),
-            0,
-            0
-        );
+        epochs[e] = Epoch(currentBlock, snapshot, snapshotHash, reward, holderLP, bytes32(0), 0, 0);
         lastProcessedAt = block.timestamp;
         totalProcessed += amount;
         totalBurned += burned;
