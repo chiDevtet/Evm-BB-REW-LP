@@ -1,25 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import ganache from 'ganache';
-import {
-  BrowserProvider,
-  ContractFactory,
-  Contract,
-  AbiCoder,
-  keccak256,
-  ZeroAddress,
-  parseEther,
-} from 'ethers';
+import { startAnvil, installArbSys } from './helpers/anvil.mjs';
+import { ContractFactory, Contract, AbiCoder, keccak256, ZeroAddress, parseEther } from 'ethers';
 import { distribution } from '../keeper/merkle.mjs';
 test('utility lifecycle: permissions, ETH fees, burn, LP, protected budgets, proofs and failed recipients', async () => {
-  const rpc = ganache.provider({
-    logging: { quiet: true },
-    chain: { hardfork: 'shanghai', chainId: 4663 },
-    wallet: { totalAccounts: 5 },
-  });
-  const provider = new BrowserProvider(rpc, undefined, { cacheTimeout: -1 });
-  provider.pollingInterval = 10;
+  const rpc = await startAnvil();
+  const { provider } = rpc;
   const owner = await provider.getSigner(0),
     keeper = await provider.getSigner(1),
     treasury = await provider.getSigner(2),
@@ -32,6 +19,7 @@ test('utility lifecycle: permissions, ETH fees, burn, LP, protected budgets, pro
     return c;
   };
   try {
+    const arb = await installArbSys(provider, owner);
     const token = await deploy('MockToken'),
       weth = await deploy('MockToken'),
       hook = await deploy('MockHook'),
@@ -70,12 +58,30 @@ test('utility lifecycle: permissions, ETH fees, burn, LP, protected budgets, pro
     assert.equal(await e.pendingFees(), 0n);
     const build = async (amount) => {
       const h = await provider.getBlock('latest');
-      return [amount, parseEther('540'), 1n, 1n, 1n, h.timestamp + 120, h.number - 1];
+      return [
+        amount,
+        parseEther('540'),
+        1n,
+        1n,
+        1n,
+        h.timestamp + 120,
+        (await arb.arbBlockNumber()) - 1n,
+      ];
     };
     await assert.rejects(e.connect(keeper).process.staticCall(...(await build(parseEther('1')))));
     await (await e.setPaused(false)).wait();
     await assert.rejects(e.connect(outsider).process.staticCall(...(await build(parseEther('1')))));
-    await (await e.connect(keeper).process(...(await build(parseEther('1'))))).wait();
+    const args = await build(parseEther('1'));
+    const expectedHash = await arb.arbBlockHash(args[6]);
+    assert(
+      args[6] > BigInt(await provider.getBlockNumber()),
+      'L2 snapshot must differ from opcode height',
+    );
+    const receipt = await (await e.connect(keeper).process(...args)).wait();
+    const epoch = await e.epochs(1);
+    assert.equal(epoch.createdBlock, BigInt(receipt.blockNumber) + 1_000_000n);
+    assert.equal(epoch.snapshotBlock, args[6]);
+    assert.equal(epoch.snapshotHash, expectedHash);
     assert.equal(await e.totalBurned(), parseEther('400'));
     assert.equal(await token.balanceOf(await e.DEAD()), parseEther('400'));
     assert.equal(await e.reservedETH(), parseEther('0.3'));
@@ -135,6 +141,6 @@ test('utility lifecycle: permissions, ETH fees, burn, LP, protected budgets, pro
     await (await e.connect(holder).acceptOwnership()).wait();
     assert.equal(await e.owner(), holderAddress);
   } finally {
-    await rpc.disconnect();
+    await rpc.close();
   }
 });

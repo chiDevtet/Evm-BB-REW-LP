@@ -9,6 +9,9 @@
   "scripts": {
     "compile": "node scripts/compile.mjs",
     "test": "npm run compile && node --test test/*.test.mjs",
+    "test:fork": "npm run compile && node test/fork/robinhood.mjs",
+    "test:native": "npm run compile && node test/fork/native-process.mjs",
+    "recover:legacy": "node scripts/recover-legacy.mjs",
     "start": "node keeper/server.mjs",
     "keeper": "node keeper/run.mjs",
     "deploy": "node scripts/deploy.mjs",
@@ -33,7 +36,7 @@
     "express": "5.2.1"
   },
   "devDependencies": {
-    "ganache": "7.9.2",
+    "@foundry-rs/anvil": "1.7.1",
     "prettier": "3.9.8",
     "prettier-plugin-solidity": "2.4.1",
     "solc": "0.8.26"

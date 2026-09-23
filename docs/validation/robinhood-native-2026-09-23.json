@@ -1,0 +1,23 @@
+{
+  "status": "PASSED",
+  "mode": "native Robinhood eth_call with candidate code override; no broadcast",
+  "engine": "0x32B6AfdC7B3D4eeFEEEc19Da193fA227337246F0",
+  "immutables": {
+    "hook": "0x51a9b6b0d5F91ce099B8fF18f9697B3A8768aaEC",
+    "vault": "0xb0b7F8dD5f08ddc308e0d9Ed73dD213a784104b8",
+    "router": "0x8876789976dEcBfCbBbe364623C63652db8C0904",
+    "v2": "0x89e5DB8B5aA49aA85AC63f691524311AEB649eba",
+    "sixField": true
+  },
+  "args": [
+    "1000000000000000",
+    "249468729824874357992805",
+    "124734364912437178996403",
+    "198000000000000",
+    "4969648302713437648",
+    "1790196039",
+    "70805779"
+  ],
+  "snapshotBlock": 70805779,
+  "result": "0x"
+}

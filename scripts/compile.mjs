@@ -15,7 +15,7 @@ const input = {
     viaIR: true,
     evmVersion: 'shanghai',
     outputSelection: {
-      '*': { '*': ['abi', 'evm.bytecode.object', 'evm.deployedBytecode.object'] },
+      '*': { '*': ['abi', 'evm.bytecode.object', 'evm.deployedBytecode.object', 'storageLayout'] },
     },
   },
 };
@@ -30,6 +30,8 @@ for (const contracts of Object.values(out.contracts))
         {
           abi: c.abi,
           bytecode: '0x' + c.evm.bytecode.object,
+          deployedBytecode: '0x' + c.evm.deployedBytecode.object,
+          storageLayout: c.storageLayout,
           runtimeBytes: c.evm.deployedBytecode.object.length / 2,
         },
         null,

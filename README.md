@@ -2,7 +2,7 @@
 
 Standalone, single-launch utility receiver for a Forge V4 **native ETH** launch on Robinhood Chain (4663), plus a polling keeper, holder indexer, and responsive dashboard.
 
-**Status: initial implementation, locally tested with mocks. Not deployed or independently audited. A real Robinhood fork/integration test is required before funds are used.** No keys or live token address are included.
+**Status: Robinhood ArbSys block-clock fix and paused owner recovery implemented. Not independently audited. Run the real-state fork gate against your configured test engine before funding a replacement.** No private keys are included.
 
 ## What it does
 
@@ -57,6 +57,37 @@ Source: https://developers.uniswap.org/docs/protocols/v2/deployments (checked Se
 6. Define exclusions and minimum holdings. Exclude every pool/custody/distributor address. Zero, dead, the engine, Forge PoolManager, and the engine's V2 pair are automatically excluded. Other pools/bridges/treasury are **not** guessed; add them explicitly where desired.
 7. Run dry-run, inspect planned minimum outputs, run the real-chain integration gate in `docs/OPERATIONS.md`, then unpause. `npm run admin -- unpause` is simulated unless explicitly enabled.
 8. Set `DRY_RUN=false` for keeper writes. Gas comes from the keeper wallet; reserved ETH is never used for gas.
+
+## Withdraw testing funds
+
+New engines support owner-only recovery while paused, even before binding or if a router/precompile is broken. Unallocated ETH, token dust, and LP above the holder reserve can be recovered. Existing epoch budgets and deferred holder ETH remain protected.
+
+```bash
+npm run admin -- recovery-status
+npm run admin -- pause
+npm run admin -- recover-eth YOUR_WALLET all
+# Token amount is in raw units, or use all for the unreserved balance:
+npm run admin -- recover-token TOKEN_ADDRESS YOUR_WALLET all
+```
+
+Admin commands simulate by default. Set `ADMIN_BROADCAST=true` and the local owner key to execute, or submit the printed calldata through the owner multisig. When executing, pause must finish before withdrawal.
+
+For the **original test engine without a withdrawal function**, stop its keeper and read [the legacy recovery procedure](docs/OPERATIONS.md#original-test-engine-recovery). `npm run recover:legacy` is read-only by default. It can retire an unused test engine via one ETH-only reward epoch; it refuses existing holder epochs/reserves. This is not an upgrade.
+
+## Robinhood fork gate
+
+```bash
+# Use an archive-capable Robinhood RPC; no private key is used.
+FORK_RPC_URL=https://YOUR_ARCHIVE_RPC \
+FORK_ENGINE_ADDRESS=YOUR_OLD_BOUND_TEST_ENGINE \
+V4_QUOTER_ADDRESS=YOUR_REAL_QUOTER npm run test:fork
+```
+
+The gate pins a real chain block and checks native ArbSys responses, then runs against the real deployed hook/vault, token, V4 router and V2 router. It checks legacy recovery, replacement-engine recovery, two processing rounds, fee collection, proof payouts and reserve protection. Missing configuration, archive access or any failed assertion exits nonzero; the report is `artifacts/robinhood-fork-report.json`.
+
+Anvil does not execute ArbOS: the fork explicitly installs a test-only adapter for ArbSys's two clock methods after checking the real precompile. Candidate code is installed at the old engine address **on the local fork only** to preserve its registered utility recipient. This neither upgrades the deployed engine nor proves that an existing launch can be redirected. The initial pair status is recorded; a fixture with an existing pair only tests subsequent V2 deposits. See [operations](docs/OPERATIONS.md) for deployment and test limits.
+
+`npm run test:native` uses the same RPC/engine/quoter settings for an additional read-only `eth_call` test: it substitutes the candidate runtime (with the actual immutable infrastructure addresses), keeps real state and **native ArbSys**, and executes the keeper's quoted round with its normal slippage limits. The fixture must already be unpaused and funded; do not change live state just to run this check. This proves one simulated round, not persistent payouts or a multi-round lifecycle. It writes `artifacts/robinhood-native-report.json`.
 
 ## Holder distributions
 
